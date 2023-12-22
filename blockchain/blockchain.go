@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/feliux/blkchn/block"
+	"github.com/feliux/blkchn/transaction"
 )
 
 func NewBlockchain() *Blockchain {
@@ -15,8 +16,9 @@ func NewBlockchain() *Blockchain {
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
-	b := block.NewBlock(nonce, previousHash)
+	b := block.NewBlock(nonce, previousHash, bc.TransactionPool)
 	bc.Chain = append(bc.Chain, b)
+	bc.TransactionPool = []*transaction.Transaction{}
 	return b
 }
 
@@ -30,4 +32,9 @@ func (bc *Blockchain) Print() {
 		block.Print()
 	}
 	log.Printf("%s\n\n", strings.Repeat("*", 25))
+}
+
+func (bc *Blockchain) AddTransaction(sender string, recipient string, value float32) {
+	t := transaction.NewTransaction(sender, recipient, value)
+	bc.TransactionPool = append(bc.TransactionPool, t)
 }
