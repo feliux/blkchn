@@ -12,6 +12,8 @@ replace github.com/feliux/blkchn/wallet => ./wallet
 
 replace github.com/feliux/blkchn/signature => ./signature
 
+replace github.com/feliux/blkchn/server => ./server
+
 require (
 	github.com/btcsuite/btcutil v1.0.2
 	golang.org/x/crypto v0.17.0

@@ -9,4 +9,5 @@ type Blockchain struct {
 	TransactionPool   []*transaction.Transaction
 	Chain             []*block.Block
 	BlockchainAddress string
+	Port              int
 }

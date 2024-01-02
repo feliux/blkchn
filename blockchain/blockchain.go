@@ -19,12 +19,21 @@ const (
 	MINING_REWARD     = 1.0
 )
 
-func NewBlockchain(blockchainAddress string) *Blockchain {
+func NewBlockchain(blockchainAddress string, port int) *Blockchain {
 	b := block.Block{}
 	bc := new(Blockchain)
 	bc.BlockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
+	bc.Port = port
 	return bc
+}
+
+func (bc *Blockchain) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Blocks []*block.Block `json:"chains"`
+	}{
+		Blocks: bc.Chain,
+	})
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {

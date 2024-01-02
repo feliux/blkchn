@@ -33,12 +33,12 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Timestamp    int64                      `json:"timestamp"`
 		Nonce        int                        `json:"nonce"`
-		PreviousHash [32]byte                   `json:"previousHash"`
+		PreviousHash string                     `json:"previousHash"`
 		Transactions []*transaction.Transaction `json:"transactions"`
 	}{
 		Timestamp:    b.Timestamp,
 		Nonce:        b.Nonce,
-		PreviousHash: b.PreviousHash,
+		PreviousHash: fmt.Sprintf("%x", b.PreviousHash),
 		Transactions: b.Transactions,
 	})
 }

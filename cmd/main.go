@@ -16,7 +16,7 @@ func main() {
 	walletB := wallet.NewWallet()
 
 	// genesis on walletM as miner
-	bc := blockchain.NewBlockchain(walletM.BlockchainAddress())
+	bc := blockchain.NewBlockchain(walletM.BlockchainAddress(), 5000)
 
 	// send 1.0 from A to B
 	t := wallet.NewTransaction(walletA.PrivateKey(), walletA.PublicKey(), walletA.BlockchainAddress(), walletB.BlockchainAddress(), 1.0)
