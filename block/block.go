@@ -4,14 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"log"
-	"time"
 
 	"github.com/feliux/blkchn/transaction"
 )
 
 func NewBlock(nonce int, previousHash [32]byte, transactions []*transaction.Transaction) *Block {
 	b := new(Block)
-	b.Timestamp = time.Now().UnixNano()
+	b.Timestamp = 0 // time.Now().UnixNano()
 	b.Nonce = nonce
 	b.PreviousHash = previousHash
 	b.Transactions = transactions
@@ -36,10 +35,10 @@ func (b *Block) Hash() [32]byte {
 /*
 func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Timestamp    int64    `json:"timestamp"`
-		Nonce        int      `json:"nonce"`
-		PreviousHash [32]byte `json:"previousHash"`
-		Transactions []*transactions.Transaction `json:"transactions"`
+		Timestamp    int64                      `json:"timestamp"`
+		Nonce        int                        `json:"nonce"`
+		PreviousHash [32]byte                   `json:"previousHash"`
+		Transactions []*transaction.Transaction `json:"transactions"`
 	}{
 		Timestamp:    b.Timestamp,
 		Nonce:        b.Nonce,

@@ -23,9 +23,9 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 		Recipient string  `json:"recipient_blockchain_address"`
 		Value     float32 `json:"value"`
 	}{
-		Sender:    t.senderBlockchainAddress,
-		Recipient: t.recipientBlockchainAddress,
-		Value:     t.value,
+		Sender:    t.SenderBlockchainAddress,
+		Recipient: t.RecipientBlockchainAddress,
+		Value:     t.Value,
 	})
 }
 */
