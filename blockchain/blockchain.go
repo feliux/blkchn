@@ -35,11 +35,9 @@ func (bc *Blockchain) LastBlock() *block.Block {
 }
 
 func (bc *Blockchain) Print() {
-	for i, block := range bc.Chain {
-		log.Printf("%s Chain %d %s\n", strings.Repeat("=", 25), i, strings.Repeat("=", 25))
-		block.Print()
+	for n, block := range bc.Chain {
+		block.Print(n)
 	}
-	log.Printf("%s\n\n", strings.Repeat("*", 25))
 }
 
 func (bc *Blockchain) AddTransaction(sender string, recipient string, value float32) {
@@ -86,7 +84,7 @@ func (bc *Blockchain) Mining() bool {
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
-	log.Println("action=mining, status=success")
+	log.Println("Mining block for current transactions...")
 	return true
 }
 

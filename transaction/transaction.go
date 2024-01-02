@@ -2,7 +2,6 @@ package transaction
 
 import (
 	"log"
-	"strings"
 )
 
 func NewTransaction(sender string, recipient string, value float32) *Transaction {
@@ -10,10 +9,7 @@ func NewTransaction(sender string, recipient string, value float32) *Transaction
 }
 
 func (t *Transaction) Print() {
-	log.Printf("%s\n", strings.Repeat("-", 40))
-	log.Printf("sender_blockchain_address      %s\n", t.SenderBlockchainAddress)
-	log.Printf("recipient_blockchain_address   %s\n", t.RecipientBlockchainAddress)
-	log.Printf("value                          %.1f\n", t.Value)
+	log.Printf("sender_blockchain_address: %s | recipient_blockchain_address: %s | value: %.1f", t.SenderBlockchainAddress, t.RecipientBlockchainAddress, t.Value)
 }
 
 /*

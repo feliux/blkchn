@@ -3,7 +3,7 @@ package block
 import (
 	"crypto/sha256"
 	"encoding/json"
-	"log"
+	"fmt"
 
 	"github.com/feliux/blkchn/transaction"
 )
@@ -17,11 +17,8 @@ func NewBlock(nonce int, previousHash [32]byte, transactions []*transaction.Tran
 	return b
 }
 
-func (b *Block) Print() {
-	log.Printf("timestamp       %d\n", b.Timestamp)
-	log.Printf("nonce           %d\n", b.Nonce)
-	log.Printf("previousHash   %x\n", b.PreviousHash)
-	log.Printf("transactions    %s\n\n", b.Transactions)
+func (b *Block) Print(n int) {
+	fmt.Printf("Chain %d ---> timestamp: %d | nonce: %d | previousHash: %x \n", n, b.Timestamp, b.Nonce, b.PreviousHash)
 	for _, t := range b.Transactions {
 		t.Print()
 	}
