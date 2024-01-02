@@ -5,17 +5,19 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+
+	"github.com/feliux/blkchn/signature"
 )
 
 func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, value float32) *Transaction {
 	return &Transaction{privateKey, publicKey, sender, recipient, value}
 }
 
-func (t *Transaction) GenerateSignature() *Signature {
+func (t *Transaction) GenerateSignature() *signature.Signature {
 	m, _ := json.Marshal(t)
 	h := sha256.Sum256([]byte(m))
 	r, s, _ := ecdsa.Sign(rand.Reader, t.senderPrivateKey, h[:])
-	return &Signature{r, s}
+	return &signature.Signature{r, s}
 }
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {

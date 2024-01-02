@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"encoding/json"
 	"log"
 )
 
@@ -12,7 +13,6 @@ func (t *Transaction) Print() {
 	log.Printf("sender_blockchain_address: %s | recipient_blockchain_address: %s | value: %.1f", t.SenderBlockchainAddress, t.RecipientBlockchainAddress, t.Value)
 }
 
-/*
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Sender    string  `json:"sender_blockchain_address"`
@@ -24,4 +24,3 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 		Value:     t.Value,
 	})
 }
-*/

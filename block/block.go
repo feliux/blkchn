@@ -29,7 +29,6 @@ func (b *Block) Hash() [32]byte {
 	return sha256.Sum256([]byte(jsonBlock))
 }
 
-/*
 func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Timestamp    int64                      `json:"timestamp"`
@@ -43,4 +42,3 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 		Transactions: b.Transactions,
 	})
 }
-*/

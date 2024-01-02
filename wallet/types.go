@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"crypto/ecdsa"
-	"math/big"
 )
 
 type Wallet struct {
@@ -17,9 +16,4 @@ type Transaction struct {
 	senderBlockchainAddress    string
 	recipientBlockchainAddress string
 	value                      float32
-}
-
-type Signature struct {
-	R *big.Int
-	S *big.Int
 }
