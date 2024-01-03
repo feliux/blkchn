@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/feliux/blkchn/block"
 	"github.com/feliux/blkchn/signature"
@@ -17,6 +18,7 @@ const (
 	MINING_DIFFICULTY = 3
 	MINING_SENDER     = "THE BLOCKCHAIN"
 	MINING_REWARD     = 1.0
+	MINING_TIMER_SEC  = 15
 )
 
 func NewBlockchain(blockchainAddress string, port int) *Blockchain {
@@ -132,12 +134,27 @@ func (bc *Blockchain) ProofOfWork() int {
 }
 
 func (bc *Blockchain) Mining() bool {
+	bc.mux.Lock() // the first routine perform mining
+	defer bc.mux.Unlock()
+	// in btc it is possible to mine and add a empty block after 10min
+	// the probability is close to zero
+	if len(bc.transactionPool) == 0 {
+		log.Println("No transactions to add. Not mining...")
+		return false
+	}
+
 	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
 	log.Println("Mining block for current transactions...")
 	return true
+}
+
+func (bc *Blockchain) StartMining() {
+	bc.Mining()
+	// waits for the duration to elapse and then calls f in its own goroutine (multiples nodes)
+	_ = time.AfterFunc(time.Second*MINING_TIMER_SEC, bc.StartMining)
 }
 
 func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
