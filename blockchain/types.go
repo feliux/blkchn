@@ -14,3 +14,7 @@ type Blockchain struct {
 	port              int
 	mux               sync.Mutex
 }
+
+type AmountResponse struct {
+	Amount float32 `json:"amount"`
+}

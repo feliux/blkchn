@@ -43,11 +43,11 @@ func (bcs *BlockchainServer) GetChain(w http.ResponseWriter, req *http.Request) 
 	case http.MethodGet:
 		w.Header().Add("Content-Type", "application/json")
 		bc := bcs.GetBlockchain()
-		m, err := bc.MarshalJSON()
+		response, err := bc.MarshalJSON()
 		if err != nil {
 			log.Printf("ERROR marshaling data: %s" + err.Error())
 		}
-		io.WriteString(w, string(m[:]))
+		io.WriteString(w, string(response[:]))
 	default:
 		log.Printf("ERROR: Invalid HTTP Method.")
 
@@ -60,7 +60,7 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 		w.Header().Add("Content-Type", "application/json")
 		bc := bcs.GetBlockchain()
 		transactions := bc.TransactionPool()
-		m, err := json.Marshal(struct {
+		response, err := json.Marshal(struct {
 			Transactions []*transaction.Transaction `json:"transactions"`
 			Length       int                        `json:"length"`
 		}{
@@ -70,7 +70,7 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 		if err != nil {
 			log.Printf("ERROR marshaling data: %s" + err.Error())
 		}
-		io.WriteString(w, string(m[:]))
+		io.WriteString(w, string(response[:]))
 
 	case http.MethodPost: // create transaction
 		decoder := json.NewDecoder(req.Body)
@@ -142,11 +142,30 @@ func (bcs *BlockchainServer) StartMine(w http.ResponseWriter, req *http.Request)
 	}
 }
 
+func (bcs *BlockchainServer) Amount(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		blockchainAddress := req.URL.Query().Get("blockchain_address")
+		amount := bcs.GetBlockchain().CalculateTotalAmount(blockchainAddress)
+		amountResponse := &blockchain.AmountResponse{Amount: amount}
+		response, err := amountResponse.MarshalJSON()
+		if err != nil {
+			log.Printf("ERROR marshaling data: %s" + err.Error())
+		}
+		w.Header().Add("Content-Type", "application/json")
+		io.WriteString(w, string(response[:]))
+	default:
+		log.Printf("ERROR: Invalid HTTP Method.")
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
 func (bcs *BlockchainServer) Run() {
 	http.HandleFunc("/", bcs.GetChain)
 	http.HandleFunc("/transactions", bcs.Transactions)
 	http.HandleFunc("/mine", bcs.Mine)
-	// we can simulate multiple nodes trying to mine with multiples call to http://localhost:5000/mine/start
+	// we can simulate multiple nodes trying to mine with multiples call to localhost:5000/mine/start
 	http.HandleFunc("/mine/start", bcs.StartMine)
+	http.HandleFunc("/amount", bcs.Amount) // localhost:5000/amount?blockchain_address=XXXXXX
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(bcs.Port()), nil))
 }
