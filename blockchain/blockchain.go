@@ -12,6 +12,7 @@ import (
 	"github.com/feliux/blkchn/block"
 	"github.com/feliux/blkchn/signature"
 	"github.com/feliux/blkchn/transaction"
+	"github.com/feliux/blkchn/utils"
 )
 
 const (
@@ -19,6 +20,12 @@ const (
 	MINING_SENDER     = "THE BLOCKCHAIN"
 	MINING_REWARD     = 1.0
 	MINING_TIMER_SEC  = 15
+
+	NEIGHBOR_IP_RANGE_START           = 0    // not included
+	NEIGHBOR_IP_RANGE_END             = 1    // included
+	BLOCKCHAIN_PORT_RANGE_START       = 5000 // included
+	BLOCKCHAIN_PORT_RANGE_END         = 5003 // included
+	BLOCKCHAIN_NEIGHBOR_SYNC_TIME_SEC = 20
 )
 
 func NewBlockchain(blockchainAddress string, port int) *Blockchain {
@@ -28,6 +35,31 @@ func NewBlockchain(blockchainAddress string, port int) *Blockchain {
 	bc.CreateBlock(0, b.Hash())
 	bc.port = port
 	return bc
+}
+
+func (bc *Blockchain) Run() {
+	bc.StartSyncNeighbors()
+}
+
+func (bc *Blockchain) SetNeighbors() {
+	bc.neighbors = utils.FindNeighbors(
+		utils.GetHost(),
+		bc.port,
+		NEIGHBOR_IP_RANGE_START,
+		NEIGHBOR_IP_RANGE_END,
+		BLOCKCHAIN_PORT_RANGE_START,
+		BLOCKCHAIN_PORT_RANGE_END)
+}
+
+func (bc *Blockchain) SyncNeighbors() {
+	bc.muxNeighbors.Lock()
+	defer bc.muxNeighbors.Unlock()
+	bc.SetNeighbors()
+}
+
+func (bc *Blockchain) StartSyncNeighbors() {
+	bc.SyncNeighbors()
+	_ = time.AfterFunc(time.Second*BLOCKCHAIN_NEIGHBOR_SYNC_TIME_SEC, bc.StartSyncNeighbors)
 }
 
 func (bc *Blockchain) TransactionPool() []*transaction.Transaction {

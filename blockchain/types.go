@@ -13,6 +13,8 @@ type Blockchain struct {
 	blockchainAddress string
 	port              int
 	mux               sync.Mutex
+	neighbors         []string
+	muxNeighbors      sync.Mutex
 }
 
 type AmountResponse struct {
