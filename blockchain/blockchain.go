@@ -22,41 +22,54 @@ const (
 func NewBlockchain(blockchainAddress string, port int) *Blockchain {
 	b := block.Block{}
 	bc := new(Blockchain)
-	bc.BlockchainAddress = blockchainAddress
+	bc.blockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
-	bc.Port = port
+	bc.port = port
 	return bc
+}
+
+func (bc *Blockchain) TransactionPool() []*transaction.Transaction {
+	return bc.transactionPool
 }
 
 func (bc *Blockchain) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Blocks []*block.Block `json:"chains"`
 	}{
-		Blocks: bc.Chain,
+		Blocks: bc.chain,
 	})
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
-	b := block.NewBlock(nonce, previousHash, bc.TransactionPool)
-	bc.Chain = append(bc.Chain, b)
-	bc.TransactionPool = []*transaction.Transaction{}
+	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
+	bc.chain = append(bc.chain, b)
+	bc.transactionPool = []*transaction.Transaction{}
 	return b
 }
 
 func (bc *Blockchain) LastBlock() *block.Block {
-	return bc.Chain[len(bc.Chain)-1]
+	return bc.chain[len(bc.chain)-1]
 }
 
 func (bc *Blockchain) Print() {
-	for n, block := range bc.Chain {
+	for n, block := range bc.chain {
 		block.Print(n)
 	}
+}
+
+func (bc *Blockchain) CreateTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *signature.Signature) bool {
+	isTransacted := bc.AddTransaction(sender, recipient, value, senderPublicKey, s)
+
+	// TODO
+	// Sync
+
+	return isTransacted
 }
 
 func (bc *Blockchain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *signature.Signature) bool {
 	t := transaction.NewTransaction(sender, recipient, value)
 	if sender == MINING_SENDER {
-		bc.TransactionPool = append(bc.TransactionPool, t)
+		bc.transactionPool = append(bc.transactionPool, t)
 		return true
 	}
 	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
@@ -66,7 +79,7 @@ func (bc *Blockchain) AddTransaction(sender string, recipient string, value floa
 				return false
 			}
 		*/
-		bc.TransactionPool = append(bc.TransactionPool, t)
+		bc.transactionPool = append(bc.transactionPool, t)
 		return true
 	} else {
 		log.Println("ERROR: could not verify transaction.")
@@ -86,7 +99,7 @@ func (bc *Blockchain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKe
 
 func (bc *Blockchain) CopyTransactionPool() []*transaction.Transaction {
 	transactions := make([]*transaction.Transaction, 0)
-	for _, t := range bc.TransactionPool {
+	for _, t := range bc.transactionPool {
 		transactions = append(
 			transactions, transaction.NewTransaction(
 				t.SenderBlockchainAddress,
@@ -119,7 +132,7 @@ func (bc *Blockchain) ProofOfWork() int {
 }
 
 func (bc *Blockchain) Mining() bool {
-	bc.AddTransaction(MINING_SENDER, bc.BlockchainAddress, MINING_REWARD, nil, nil)
+	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
@@ -129,7 +142,7 @@ func (bc *Blockchain) Mining() bool {
 
 func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
 	var totalAmount float32 = 0.0
-	for _, b := range bc.Chain {
+	for _, b := range bc.chain {
 		for _, t := range b.Transactions {
 			value := t.Value
 			if blockchainAddress == t.RecipientBlockchainAddress {

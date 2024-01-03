@@ -6,8 +6,8 @@ import (
 )
 
 type Blockchain struct {
-	TransactionPool   []*transaction.Transaction
-	Chain             []*block.Block
-	BlockchainAddress string
-	Port              int
+	transactionPool   []*transaction.Transaction
+	chain             []*block.Block
+	blockchainAddress string
+	port              int
 }
