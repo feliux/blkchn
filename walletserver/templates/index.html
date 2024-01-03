@@ -5,7 +5,7 @@
     <title>Wallet</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script>
-         $(function () {
+        $(function () {
             $.ajax({
                 url: '/wallet',
                 type: 'POST',
@@ -39,12 +39,12 @@
                     contentType: 'application/json',
                     data: JSON.stringify(transaction_data),
                     success: function (response) {
-                    console.info(response);
-                    /*if ($.parseJSON(response).message === 'failed') {
-                        alert("failed")
-                        return
-                    }*/
-                    alert('Send success');
+                        console.info(response);
+                        /*if ($.parseJSON(response).message === 'failed') {
+                            alert("failed")
+                            return
+                        }*/
+                        alert('Send success');
                     },
                     error: function (response) {
                         console.error(response);
@@ -52,6 +52,27 @@
                     }
                 })
             })
+            function reload_amount() {
+                let data = {'blockchain_address': $('#blockchain_address').val()}
+                $.ajax({
+                    url: '/wallet/amount',
+                    type: 'GET',
+                    data: data,
+                    success: function (response) {
+                        let amount = response['amount'];
+                        $('#wallet_amount').text(amount);
+                        console.info(amount)
+                    },
+                    error: function(error) {
+                        console.error(error)
+                    }
+                })
+            }
+            $('#reload_wallet').click(function(){
+                reload_amount();
+            });
+            // uncomment for automatic reload every 3s
+            // setInterval(reload_amount, 3000)
         })
     </script>
 </head>
