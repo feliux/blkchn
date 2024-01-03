@@ -12,7 +12,7 @@ func JsonStatus(message string) []byte {
 		Message: message,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("ERROR marshaling data: %s" + err.Error())
 	}
 	return m
 }

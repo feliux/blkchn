@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+	"log"
 
 	"github.com/feliux/blkchn/signature"
 )
@@ -14,7 +15,10 @@ func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, se
 }
 
 func (t *Transaction) GenerateSignature() *signature.Signature {
-	m, _ := json.Marshal(t)
+	m, err := json.Marshal(t)
+	if err != nil {
+		log.Printf("ERROR marshaling data: %s" + err.Error())
+	}
 	h := sha256.Sum256([]byte(m))
 	r, s, _ := ecdsa.Sign(rand.Reader, t.senderPrivateKey, h[:])
 	return &signature.Signature{r, s}

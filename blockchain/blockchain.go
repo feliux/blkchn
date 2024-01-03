@@ -69,14 +69,17 @@ func (bc *Blockchain) AddTransaction(sender string, recipient string, value floa
 		bc.TransactionPool = append(bc.TransactionPool, t)
 		return true
 	} else {
-		log.Println("ERROR: Verify Transaction")
+		log.Println("ERROR: could not verify transaction.")
 	}
 	return false
 
 }
 
 func (bc *Blockchain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *signature.Signature, t *transaction.Transaction) bool {
-	m, _ := json.Marshal(t)
+	m, err := json.Marshal(t)
+	if err != nil {
+		log.Printf("ERROR marshaling data: %s" + err.Error())
+	}
 	h := sha256.Sum256([]byte(m))
 	return ecdsa.Verify(senderPublicKey, h[:], s.R, s.S)
 }

@@ -1,6 +1,7 @@
 package walletserver
 
 import (
+	"encoding/json"
 	"html/template"
 	"io"
 	"log"
@@ -37,7 +38,7 @@ func (ws *WalletServer) Index(w http.ResponseWriter, req *http.Request) {
 		t, _ := template.ParseFiles(path.Join(tempDir, "index.html"))
 		t.Execute(w, "")
 	default:
-		log.Printf("ERROR: Invalid HTTP Method.")
+		log.Println("ERROR: Invalid HTTP Method.")
 	}
 }
 
@@ -48,7 +49,7 @@ func (ws *WalletServer) Wallet(w http.ResponseWriter, req *http.Request) {
 		myWallet := wallet.NewWallet()
 		m, err := myWallet.MarshalJSON()
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("ERROR marshaling data: %s" + err.Error())
 		}
 		io.WriteString(w, string(m[:]))
 	default:
@@ -60,10 +61,22 @@ func (ws *WalletServer) Wallet(w http.ResponseWriter, req *http.Request) {
 func (ws *WalletServer) CreateTransaction(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodPost:
-		io.WriteString(w, string(utils.JsonStatus("success")))
+		decoder := json.NewDecoder(req.Body)
+		var t wallet.TransactionRequest
+		err := decoder.Decode(&t)
+		if err != nil {
+			log.Printf("ERROR decoding data: %s" + err.Error())
+			io.WriteString(w, string(utils.JsonStatus("failed")))
+			return
+		}
+		if !t.Validate() {
+			log.Println("ERROR: missing field(s)")
+			io.WriteString(w, string(utils.JsonStatus("failed")))
+			return
+		}
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("ERROR: Invalid HTTP Method")
+		log.Println("ERROR: Invalid HTTP Method.")
 	}
 }
 

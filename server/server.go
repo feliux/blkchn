@@ -44,11 +44,11 @@ func (bcs *BlockchainServer) GetChain(w http.ResponseWriter, req *http.Request) 
 		bc := bcs.GetBlockchain()
 		m, err := bc.MarshalJSON()
 		if err != nil {
-			panic(err)
+			log.Printf("ERROR marshaling data: %s" + err.Error())
 		}
 		io.WriteString(w, string(m[:]))
 	default:
-		log.Printf("ERROR: Invalid HTTP Method")
+		log.Printf("ERROR: Invalid HTTP Method.")
 
 	}
 }
