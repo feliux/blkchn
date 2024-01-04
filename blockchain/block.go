@@ -1,4 +1,4 @@
-package block
+package blockchain
 
 import (
 	"crypto/sha256"
@@ -11,28 +11,28 @@ import (
 
 func NewBlock(nonce int, previousHash [32]byte, transactions []*transaction.Transaction) *Block {
 	b := new(Block)
-	b.Timestamp = 0 // time.Now().UnixNano()
-	b.Nonce = nonce
-	b.PreviousHash = previousHash
-	b.Transactions = transactions
+	b.timestamp = 0 // time.Now().UnixNano()
+	b.nonce = nonce
+	b.previousHash = previousHash
+	b.transactions = transactions
 	return b
 }
 
 func (b *Block) PreviousHash() [32]byte {
-	return b.PreviousHash
+	return b.previousHash
 }
 
 func (b *Block) Nonce() int {
-	return b.Nonce
+	return b.nonce
 }
 
-func (b *Block) Transactions() []*Transaction {
-	return b.Transactions
+func (b *Block) Transactions() []*transaction.Transaction {
+	return b.transactions
 }
 
 func (b *Block) Print(n int) {
-	fmt.Printf("Chain %d ---> timestamp: %d | nonce: %d | previousHash: %x \n", n, b.Timestamp, b.Nonce, b.PreviousHash)
-	for _, t := range b.Transactions {
+	fmt.Printf("Chain %d ---> timestamp: %d | nonce: %d | previousHash: %x \n", n, b.timestamp, b.nonce, b.previousHash)
+	for _, t := range b.transactions {
 		t.Print()
 	}
 }
@@ -49,10 +49,10 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 		PreviousHash string                     `json:"previousHash"`
 		Transactions []*transaction.Transaction `json:"transactions"`
 	}{
-		Timestamp:    b.Timestamp,
-		Nonce:        b.Nonce,
-		PreviousHash: fmt.Sprintf("%x", b.PreviousHash),
-		Transactions: b.Transactions,
+		Timestamp:    b.timestamp,
+		Nonce:        b.nonce,
+		PreviousHash: fmt.Sprintf("%x", b.previousHash),
+		Transactions: b.transactions,
 	})
 }
 
@@ -64,10 +64,10 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 		PreviousHash *string                     `json:"previous_hash"`
 		Transactions *[]*transaction.Transaction `json:"transactions"`
 	}{
-		Timestamp:    &b.Timestamp,
-		Nonce:        &b.Nonce,
+		Timestamp:    &b.timestamp,
+		Nonce:        &b.nonce,
 		PreviousHash: &previousHash,
-		Transactions: &b.Transactions,
+		Transactions: &b.transactions,
 	}
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err

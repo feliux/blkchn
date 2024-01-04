@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/feliux/blkchn/block"
 	"github.com/feliux/blkchn/signature"
 	"github.com/feliux/blkchn/transaction"
 	"github.com/feliux/blkchn/utils"
@@ -31,7 +30,7 @@ const (
 )
 
 func NewBlockchain(blockchainAddress string, port int) *Blockchain {
-	b := block.Block{}
+	b := Block{}
 	bc := new(Blockchain)
 	bc.blockchainAddress = blockchainAddress
 	bc.CreateBlock(0, b.Hash())
@@ -39,7 +38,7 @@ func NewBlockchain(blockchainAddress string, port int) *Blockchain {
 	return bc
 }
 
-func (bc *Blockchain) Chain() []*block.Block {
+func (bc *Blockchain) Chain() []*Block {
 	// to review: to make it public (on ResolveConflicts)
 	return bc.chain
 }
@@ -81,7 +80,7 @@ func (bc *Blockchain) ClearTransactionPool() {
 
 func (bc *Blockchain) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Blocks []*block.Block `json:"chain"`
+		Blocks []*Block `json:"chain"`
 	}{
 		Blocks: bc.chain,
 	})
@@ -89,7 +88,7 @@ func (bc *Blockchain) MarshalJSON() ([]byte, error) {
 
 func (bc *Blockchain) UnmarshalJSON(data []byte) error {
 	str := &struct {
-		Blocks *[]*block.Block `json:"chain"`
+		Blocks *[]*Block `json:"chain"`
 	}{
 		Blocks: &bc.chain,
 	}
@@ -99,8 +98,8 @@ func (bc *Blockchain) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
-	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
+func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
+	b := NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*transaction.Transaction{}
 	// when a block is created we must delete transactions from other nodes
@@ -117,7 +116,7 @@ func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block
 	return b
 }
 
-func (bc *Blockchain) LastBlock() *block.Block {
+func (bc *Blockchain) LastBlock() *Block {
 	return bc.chain[len(bc.chain)-1]
 }
 
@@ -202,11 +201,11 @@ func (bc *Blockchain) CopyTransactionPool() []*transaction.Transaction {
 func (bc *Blockchain) ValidProof(nonce int, previousHash [32]byte, transactions []*transaction.Transaction, difficulty int) bool {
 	// rule: if new block hash starts by 'difficulty' times 0
 	zeros := strings.Repeat("0", difficulty)
-	guessBlock := block.Block{
-		Timestamp:    0, // does not matter. Only matters the rule
-		Nonce:        nonce,
-		PreviousHash: previousHash,
-		Transactions: transactions}
+	guessBlock := Block{
+		timestamp:    0, // does not matter. Only matters the rule
+		nonce:        nonce,
+		previousHash: previousHash,
+		transactions: transactions}
 	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
 	return guessHashStr[:difficulty] == zeros
 }
@@ -257,7 +256,7 @@ func (bc *Blockchain) StartMining() {
 func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
 	var totalAmount float32 = 0.0
 	for _, b := range bc.chain {
-		for _, t := range b.Transactions {
+		for _, t := range b.transactions {
 			value := t.Value
 			if blockchainAddress == t.RecipientBlockchainAddress {
 				totalAmount += value
@@ -289,7 +288,7 @@ func (bc *Blockchain) ValidChain(chain []*Block) bool {
 }
 
 func (bc *Blockchain) ResolveConflicts() bool {
-	var longestChain []*block.Block = nil
+	var longestChain []*Block = nil
 	maxLength := len(bc.chain)
 	for _, n := range bc.neighbors {
 		endpoint := fmt.Sprintf("http://%s/chain", n)
