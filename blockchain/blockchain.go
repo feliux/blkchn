@@ -1,11 +1,13 @@
 package blockchain
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -66,6 +68,10 @@ func (bc *Blockchain) TransactionPool() []*transaction.Transaction {
 	return bc.transactionPool
 }
 
+func (bc *Blockchain) ClearTransactionPool() {
+	bc.transactionPool = bc.transactionPool[:0]
+}
+
 func (bc *Blockchain) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Blocks []*block.Block `json:"chains"`
@@ -78,6 +84,17 @@ func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block
 	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*transaction.Transaction{}
+	// when a block is created we must delete transactions from other nodes
+	for _, hostAddr := range bc.neighbors {
+		endpoint := fmt.Sprintf("http://%s/transactions", hostAddr)
+		client := &http.Client{}
+		req, _ := http.NewRequest("DELETE", endpoint, nil)
+		_, err := client.Do(req)
+		if err != nil {
+			log.Printf("ERROR sending DELETE to blockchain server: %s" + err.Error())
+		}
+		log.Printf("Deleted transactions on node %s", hostAddr)
+	}
 	return b
 }
 
@@ -94,8 +111,28 @@ func (bc *Blockchain) Print() {
 func (bc *Blockchain) CreateTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *signature.Signature) bool {
 	isTransacted := bc.AddTransaction(sender, recipient, value, senderPublicKey, s)
 
-	// TODO
-	// Sync
+	if isTransacted {
+		// replicate transaction information on neighbors
+		for _, hostAddr := range bc.neighbors {
+			publicKeyStr := fmt.Sprintf("%064x%064x", senderPublicKey.X.Bytes(), senderPublicKey.Y.Bytes())
+			signatureStr := s.String()
+			bt := &transaction.TransactionRequest{&sender, &recipient, &publicKeyStr, &value, &signatureStr}
+			m, err := json.Marshal(bt)
+			if err != nil {
+				log.Printf("ERROR marshaling data: %s" + err.Error())
+			}
+			buf := bytes.NewBuffer(m)
+			endpoint := fmt.Sprintf("http://%s/transactions", hostAddr)
+			client := &http.Client{}
+			req, _ := http.NewRequest("PUT", endpoint, buf)
+			_, err = client.Do(req)
+			if err != nil {
+				log.Printf("ERROR sending PUT to blockchain server: %s" + err.Error())
+				return false
+			}
+			log.Printf("Updated transaction on node %s", hostAddr)
+		}
+	}
 
 	return isTransacted
 }

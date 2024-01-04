@@ -100,6 +100,38 @@ func (bcs *BlockchainServer) Transactions(w http.ResponseWriter, req *http.Reque
 			response = utils.JsonStatus("success")
 		}
 		io.WriteString(w, string(response))
+	case http.MethodPut:
+		decoder := json.NewDecoder(req.Body)
+		var t transaction.TransactionRequest
+		err := decoder.Decode(&t)
+		if err != nil {
+			log.Printf("ERROR decoding data: %s" + err.Error())
+			io.WriteString(w, string(utils.JsonStatus("failed")))
+			return
+		}
+		if !t.Validate() {
+			log.Println("ERROR: missing field(s)")
+			io.WriteString(w, string(utils.JsonStatus("failed")))
+			return
+		}
+		publicKey := utils.PublicKeyFromString(*t.SenderPublicKey)
+		signature := utils.SignatureFromString(*t.Signature)
+		bc := bcs.GetBlockchain()
+		// AddTransaction not CreateTransaction. We want to sync between nodes
+		isUpdated := bc.AddTransaction(*t.SenderBlockchainAddress, *t.RecipientBlockchainAddress, *t.Value, publicKey, signature)
+		w.Header().Add("Content-Type", "application/json")
+		var response []byte
+		if !isUpdated {
+			w.WriteHeader(http.StatusBadRequest)
+			response = utils.JsonStatus("failed")
+		} else {
+			response = utils.JsonStatus("success")
+		}
+		io.WriteString(w, string(response))
+	case http.MethodDelete:
+		bc := bcs.GetBlockchain()
+		bc.ClearTransactionPool()
+		io.WriteString(w, string(utils.JsonStatus("success")))
 	default:
 		log.Println("ERROR: Invalid HTTP Method.")
 		w.WriteHeader(http.StatusBadRequest)
