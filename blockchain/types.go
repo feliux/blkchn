@@ -1,10 +1,28 @@
 package blockchain
 
 import (
-	"github.com/feliux/blkchn/block"
+	"sync"
+
+	"github.com/feliux/blkchn/transaction"
 )
 
+type Block struct {
+	timestamp    int64
+	nonce        int
+	previousHash [32]byte
+	transactions []*transaction.Transaction
+}
+
 type Blockchain struct {
-	TransactionPool []string //[]*Transaction
-	Chain           []*block.Block
+	transactionPool   []*transaction.Transaction
+	chain             []*Block
+	blockchainAddress string
+	port              int
+	mux               sync.Mutex
+	neighbors         []string
+	muxNeighbors      sync.Mutex
+}
+
+type AmountResponse struct {
+	Amount float32 `json:"amount"`
 }
