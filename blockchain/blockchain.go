@@ -39,8 +39,15 @@ func NewBlockchain(blockchainAddress string, port int) *Blockchain {
 	return bc
 }
 
+func (bc *Blockchain) Chain() []*block.Block {
+	// to review: to make it public (on ResolveConflicts)
+	return bc.chain
+}
+
 func (bc *Blockchain) Run() {
 	bc.StartSyncNeighbors()
+	// ResolveConflicts when a node is addded
+	bc.ResolveConflicts() // to review: if a new node has a malicious valid longestChain? 51% attack
 }
 
 func (bc *Blockchain) SetNeighbors() {
@@ -74,10 +81,22 @@ func (bc *Blockchain) ClearTransactionPool() {
 
 func (bc *Blockchain) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Blocks []*block.Block `json:"chains"`
+		Blocks []*block.Block `json:"chain"`
 	}{
 		Blocks: bc.chain,
 	})
+}
+
+func (bc *Blockchain) UnmarshalJSON(data []byte) error {
+	str := &struct {
+		Blocks *[]*block.Block `json:"chain"`
+	}{
+		Blocks: &bc.chain,
+	}
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
@@ -127,7 +146,7 @@ func (bc *Blockchain) CreateTransaction(sender string, recipient string, value f
 			req, _ := http.NewRequest("PUT", endpoint, buf)
 			_, err = client.Do(req)
 			if err != nil {
-				log.Printf("ERROR sending PUT to blockchain server: %s" + err.Error())
+				log.Printf("ERROR sending PUT transactions to blockchain server: %s" + err.Error())
 				return false
 			}
 			log.Printf("Updated transaction on node %s", hostAddr)
@@ -217,6 +236,15 @@ func (bc *Blockchain) Mining() bool {
 	previousHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
 	log.Println("Mining block for current transactions...")
+	for _, n := range bc.neighbors {
+		endpoint := fmt.Sprintf("http://%s/consensus", n)
+		client := &http.Client{}
+		req, _ := http.NewRequest("PUT", endpoint, nil)
+		_, err := client.Do(req)
+		if err != nil {
+			log.Printf("ERROR sending PUT consensus to blockchain server: %s" + err.Error())
+		}
+	}
 	return true
 }
 
@@ -240,4 +268,60 @@ func (bc *Blockchain) CalculateTotalAmount(blockchainAddress string) float32 {
 		}
 	}
 	return totalAmount
+}
+
+func (bc *Blockchain) ValidChain(chain []*Block) bool {
+	preBlock := chain[0] // genesis block
+	currentIndex := 1
+	// check if previous hash block matches
+	for currentIndex < len(chain) {
+		b := chain[currentIndex]
+		if b.previousHash != preBlock.Hash() {
+			return false
+		}
+		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transactions(), MINING_DIFFICULTY) {
+			return false
+		}
+		preBlock = b
+		currentIndex += 1
+	}
+	return true
+}
+
+func (bc *Blockchain) ResolveConflicts() bool {
+	var longestChain []*block.Block = nil
+	maxLength := len(bc.chain)
+	for _, n := range bc.neighbors {
+		endpoint := fmt.Sprintf("http://%s/chain", n)
+		resp, err := http.Get(endpoint)
+		if err != nil {
+			log.Printf("ERROR retrieving chain from host %s: %s", endpoint, err.Error())
+			// to review: what happen if the node is not reacheable?
+			//return false
+		}
+		if resp.StatusCode == 200 {
+			var bcResponse Blockchain
+			decoder := json.NewDecoder(resp.Body)
+			err := decoder.Decode(&bcResponse)
+			if err != nil {
+				log.Printf("ERROR decoding data verifying longestChain: %s" + err.Error())
+				// to review: what happen if the node is not reacheable?
+				//return false
+			}
+			chain := bcResponse.Chain()
+
+			if len(chain) > maxLength && bc.ValidChain(chain) {
+				maxLength = len(chain)
+				longestChain = chain
+			}
+		}
+	}
+	if longestChain != nil {
+		bc.chain = longestChain
+		log.Println("The chain has been replaced by the longestChain.")
+		return true
+	}
+	// to review
+	log.Println("The chain NOT has been replaced by the longestChain. The current chain is the valid chain.")
+	return false
 }

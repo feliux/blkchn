@@ -192,6 +192,23 @@ func (bcs *BlockchainServer) Amount(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (bcs *BlockchainServer) Consensus(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodPut:
+		bc := bcs.GetBlockchain()
+		replaced := bc.ResolveConflicts()
+		w.Header().Add("Content-Type", "application/json")
+		if replaced {
+			io.WriteString(w, string(utils.JsonStatus("success")))
+		} else {
+			io.WriteString(w, string(utils.JsonStatus("failed")))
+		}
+	default:
+		log.Printf("ERROR: Invalid HTTP Method.")
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
 func (bcs *BlockchainServer) Run() {
 	bcs.GetBlockchain().Run()
 	http.HandleFunc("/", bcs.GetChain)
@@ -200,5 +217,6 @@ func (bcs *BlockchainServer) Run() {
 	// we can simulate multiple nodes trying to mine with multiples call to localhost:5000/mine/start
 	http.HandleFunc("/mine/start", bcs.StartMine)
 	http.HandleFunc("/amount", bcs.Amount) // localhost:5000/amount?blockchain_address=XXXXXX
+	http.HandleFunc("/consensus", bcs.Consensus)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(bcs.Port()), nil))
 }
