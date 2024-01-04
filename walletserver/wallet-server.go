@@ -17,7 +17,7 @@ import (
 	"github.com/feliux/blkchn/wallet"
 )
 
-const tempDir = "../walletserver/templates"
+const tempDir = "./walletserver/templates"
 
 type WalletServer struct {
 	port    int

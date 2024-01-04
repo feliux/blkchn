@@ -29,7 +29,7 @@ func IsFoundHost(host string, port int) bool {
 	target := fmt.Sprintf("%s:%d", host, port)
 	_, err := net.DialTimeout("tcp", target, 1*time.Second)
 	if err != nil {
-		fmt.Printf("%s %v\n", target, err)
+		log.Printf("ERROR: %s", err)
 		return false
 	}
 	log.Printf("TCP connection to %s", target)
@@ -51,7 +51,7 @@ func FindNeighbors(myHost string, myPort int, startIp int, endIp int, startPort 
 		for ip := startIp; ip <= endIp-1; ip += 1 {
 			guessHost := fmt.Sprintf("%s%d", prefixHost, lastIp+ip)
 			guessTarget := fmt.Sprintf("%s:%d", guessHost, port)
-			log.Printf("Checking target %s", guessTarget)
+			log.Printf("Checking connection with host %s", guessTarget)
 			if guessTarget != address && IsFoundHost(guessHost, port) {
 				neighbors = append(neighbors, guessTarget)
 			}
