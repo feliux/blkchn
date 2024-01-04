@@ -1,12 +1,54 @@
 # blkchn
 
+Blockchain project
+
+**Features**
+
+- Proof of Work: reward a miner if the new block hash starts by a MINING_DIFFICULTY times 0, such as '000ewfbweg5w1g61we1'.
+- Consensus algorithm: the longest chain rule.
+- Addresses: version 1 Bitcoin addresses.
+
+**TODO**
+
+Firsts goes first...
+
+1. ~~First it must works~~
+    - ~~Blocks, transactions, hashing method, nodes, etc~~
+    - ~~Mining logic (PoW)~~
+    - ~~Wallets, blockchain addresses, transaction verification~~
+    - ~~APIs~~
+    - ~~Structure blockchain network: nodes, wallets and consensus algo~~
+2. Then make it better
+    - Build a CLI
+    - Make structs private
+    - Checks "to review" comments
+    - Docker, k8s, etc
+    - CI/CD
+    - Implement ICO for wallet creation
+    - Implement fees.
+    - Improve logging and error handling
+        - Not decrease wallet amount when a transaction fails
+    - Improve APIs with handlers and routers
+    - Save blockchain state (despite cache)
+3. Then make it faster
+    - Synchronizing transactions with P2P
+
 ## Usage
 
-### Init
+### Serve Blockchain
 
 ```bash
-go mod edit -replace github.com/feliux/block=./block
-go mod edit -replace github.com/feliux/blockchain=./blockchain
+make server-build
+make wallet-build
+
+# 3 nodes
+make server-run ARGS="-port=5000"
+make server-run ARGS="-port=5001"
+make server-run ARGS="-port=5002"
+
+# 2 wallets
+make wallet-run ARGS="-port 8080 -gateway=http://127.0.0.1:5001"
+make wallet-run ARGS="-port 8081 -gateway=http://127.0.0.1:5002"
 ```
 
 ## References
