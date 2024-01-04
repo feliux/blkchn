@@ -50,7 +50,6 @@ func (bcs *BlockchainServer) GetChain(w http.ResponseWriter, req *http.Request) 
 		io.WriteString(w, string(response[:]))
 	default:
 		log.Printf("ERROR: Invalid HTTP Method.")
-
 	}
 }
 

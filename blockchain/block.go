@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/feliux/blkchn/transaction"
 )
@@ -38,7 +39,10 @@ func (b *Block) Print(n int) {
 }
 
 func (b *Block) Hash() [32]byte {
-	jsonBlock, _ := json.Marshal(b)
+	jsonBlock, err := json.Marshal(b)
+	if err != nil {
+		log.Printf("ERROR marshaling data: %s", err.Error())
+	}
 	return sha256.Sum256([]byte(jsonBlock))
 }
 
@@ -61,7 +65,7 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 	str := &struct {
 		Timestamp    *int64                      `json:"timestamp"`
 		Nonce        *int                        `json:"nonce"`
-		PreviousHash *string                     `json:"previous_hash"`
+		PreviousHash *string                     `json:"previousHash"`
 		Transactions *[]*transaction.Transaction `json:"transactions"`
 	}{
 		Timestamp:    &b.timestamp,
@@ -72,7 +76,10 @@ func (b *Block) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
 	}
-	ph, _ := hex.DecodeString(*str.PreviousHash)
+	ph, err := hex.DecodeString(*str.PreviousHash)
+	if err != nil {
+		log.Printf("ERROR decoding hex to bytes: %s", err)
+	}
 	copy(b.previousHash[:], ph[:32])
 	return nil
 }

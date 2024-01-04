@@ -47,6 +47,7 @@ func (bc *Blockchain) Run() {
 	bc.StartSyncNeighbors()
 	// ResolveConflicts when a node is addded
 	bc.ResolveConflicts() // to review: if a new node has a malicious valid longestChain? 51% attack
+	bc.StartMining()
 }
 
 func (bc *Blockchain) SetNeighbors() {
@@ -162,19 +163,16 @@ func (bc *Blockchain) AddTransaction(sender string, recipient string, value floa
 		return true
 	}
 	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
-		/*
-			if bc.CalculateTotalAmount(sender) < value {
-				log.Println("ERROR: Not enough balance in a wallet")
-				return false
-			}
-		*/
+		if bc.CalculateTotalAmount(sender) < value {
+			log.Printf("ERROR: Not enough balance in the wallet %s", sender)
+			return false
+		}
 		bc.transactionPool = append(bc.transactionPool, t)
 		return true
 	} else {
-		log.Println("ERROR: could not verify transaction.")
+		log.Printf("ERROR: could not verify transaction for wallet %s", sender)
 	}
 	return false
-
 }
 
 func (bc *Blockchain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *signature.Signature, t *transaction.Transaction) bool {
@@ -225,10 +223,10 @@ func (bc *Blockchain) Mining() bool {
 	defer bc.mux.Unlock()
 	// in btc it is possible to mine and add a empty block after 10min
 	// the probability is close to zero
-	if len(bc.transactionPool) == 0 {
+	/*if len(bc.transactionPool) == 0 {
 		log.Println("No transactions to add. Not mining...")
 		return false
-	}
+	}*/
 
 	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
@@ -276,9 +274,11 @@ func (bc *Blockchain) ValidChain(chain []*Block) bool {
 	for currentIndex < len(chain) {
 		b := chain[currentIndex]
 		if b.previousHash != preBlock.Hash() {
+			log.Println("Invalid chain: previousHash is not equal to calculated previous hash.")
 			return false
 		}
 		if !bc.ValidProof(b.Nonce(), b.PreviousHash(), b.Transactions(), MINING_DIFFICULTY) {
+			log.Println("Invalid chain: can not proobe difficulty.")
 			return false
 		}
 		preBlock = b
@@ -307,11 +307,10 @@ func (bc *Blockchain) ResolveConflicts() bool {
 				// to review: what happen if the node is not reacheable?
 				//return false
 			}
-			chain := bcResponse.Chain()
-
-			if len(chain) > maxLength && bc.ValidChain(chain) {
-				maxLength = len(chain)
-				longestChain = chain
+			chainResponse := bcResponse.Chain()
+			if len(chainResponse) > maxLength && bc.ValidChain(chainResponse) {
+				maxLength = len(chainResponse)
+				longestChain = chainResponse
 			}
 		}
 	}

@@ -32,7 +32,7 @@ func IsFoundHost(host string, port int) bool {
 		log.Printf("ERROR: %s", err)
 		return false
 	}
-	log.Printf("TCP connection to %s", target)
+	log.Printf("TCP connection to %s. Added new host to neighbors.", target)
 	return true
 }
 
@@ -57,6 +57,6 @@ func FindNeighbors(myHost string, myPort int, startIp int, endIp int, startPort 
 			}
 		}
 	}
-	log.Printf("Blockchain neighbors: %v", neighbors)
+	log.Printf("Active blockchain neighbors: %v", neighbors)
 	return neighbors
 }

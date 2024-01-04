@@ -40,11 +40,12 @@
                     data: JSON.stringify(transaction_data),
                     success: function (response) {
                         console.info(response);
-                        /*if ($.parseJSON(response).message === 'failed') {
+                        if (response.message == 'failed') {
                             alert("failed")
                             return
-                        }*/
-                        alert('Send success');
+                        } else {
+                            alert('Send success');
+                        }
                     },
                     error: function (response) {
                         console.error(response);
@@ -72,7 +73,7 @@
                 reload_amount();
             });
             // uncomment for automatic reload every 3s
-            // setInterval(reload_amount, 3000)
+            setInterval(reload_amount, 3000)
         })
     </script>
 </head>
